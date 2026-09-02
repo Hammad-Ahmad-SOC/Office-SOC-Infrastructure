@@ -25,10 +25,49 @@ Built and scheduled custom real-time SPL (Search Processing Language) queries ru
 * **Malicious Process Execution:** Monitoring Sysmon Event ID `1` for suspicious Command Line activity, obfuscated or encoded PowerShell commands (`-enc`, `*encodedcommand*`), and raw CMD script execution.
 * **Antivirus Integration:** Integrating Windows Defender logs (`EventCode 1116`) into central SIEM alerts.
 
-### 2. Alert Tuning & False Positive Reduction
+### Alert Tuning & False Positive Reduction
 * Conducted baseline analysis to filter out legitimate office background processes and utility binaries (such as application webviews and background browser runtimes like WebView2) to minimize alert fatigue and maintain high-fidelity incident notification.
 
 ---
+
+---
+
+## 💻 Queries Used for Security Detection
+
+Here are the custom Search Processing Language (SPL) queries implemented within Splunk for real-time threat detection and telemetry monitoring:
+
+### Brute-Force Detection (Failed Logons)
+
+**Description:** Monitors Windows Event ID `4625` to track repetitive failed login attempts and correlates source IPs to detect potential brute-force or unauthorized access attempts.
+
+```spl
+index=windows EventCode=4625 
+| stats count by Account_Name, IpAddress 
+| where count > 5 
+| sort -count
+```
+### Malicious Process Execution & Suspicious Command Lines
+​**Description:** Audits Sysmon Event ID 1 to capture suspicious process executions, obfuscated PowerShell commands, and raw script invocations.
+
+```spl
+index=windows EventCode=1 
+| search CommandLine="* -enc *" OR CommandLine="*powershell* -nop *" OR CommandLine="*cmd.exe*"
+| table _time, Computer, User, Image, CommandLine
+```
+### Account Lifecycle Tracking (Creation/Deletion)
+​**Description:** Tracks user account management events to flag unauthorized privilege escalation or backdoor creation.
+
+```spl
+index=windows (EventCode=4720 OR EventCode=4726)
+| table _time, Computer, EventCode, Target_Account_Name, Who_Created
+```
+### Antivirus & Defender Threat Detection
+**Description:** Integrates Windows Defender logs (`EventCode=1116`) into the central SIEM to track and aggregate active malware threats by computer, threat name, and targeted user.
+
+```spl
+index=windows EventCode=1116 | stats count by Computer, ThreatName, User
+```
+
 
 ## 📈 Future Enhancements
 * Integrating Wazuh active response rules for automated endpoint isolation upon critical threat triggers.
