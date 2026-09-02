@@ -36,7 +36,9 @@ Here are the custom Search Processing Language (SPL) queries implemented within 
 
 ### 1. Brute-Force Detection (Failed Logons)
 * **Description:** Monitors Windows Event ID `4625` to track repetitive failed login attempts and correlates source IPs to detect potential brute-force or unauthorized access attempts.
+
 spl
+
 index=windows EventCode=4625 
 | stats count by Account_Name, IpAddress 
 | where count > 5 
@@ -45,7 +47,9 @@ index=windows EventCode=4625
 
 ### 2. Malicious Process Execution & Suspicious Command Lines
  * **Description:** Audits Sysmon Event ID 1 to capture suspicious process executions, obfuscated PowerShell commands, and raw script invocations.
+
 spl
+
 index=windows EventCode=1 
 | search CommandLine="* -enc " OR CommandLine="*powershell -nop " OR CommandLine="*cmd.exe"
 | table _time, Computer, User, Image, CommandLine
@@ -53,14 +57,18 @@ index=windows EventCode=1
 
 ### 3. Account Lifecycle Tracking (Creation/Deletion)
  * **Description:** Tracks user account management events to flag unauthorized privilege escalation or backdoor creation.
+
 spl
+
 index=windows (EventCode=4720 OR EventCode=4726)
 | table _time, Computer, EventCode, Target_Account_Name, Who_Created
 
 
 ### 4. Antivirus & Defender Threat Detection
  * **Description:** Integrates Windows Defender logs (EventCode=1116) into the central SIEM to track and aggregate active malware threats by computer, threat name, and targeted user.
+
 spl
+
 index=windows EventCode=1116 | stats count by Computer, ThreatName, User
 
 
